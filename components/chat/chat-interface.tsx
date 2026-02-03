@@ -16,6 +16,7 @@ import { client } from "@/lib/api-client";
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { Badge } from "../ui/badge";
+import { SendIcon } from "lucide-react";
 
 export default function ChatInterface({ matchId }: { matchId: string }) {
   const { user: clerkUser } = useUser();
@@ -135,78 +136,86 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="col-span-2">
-        <Card className="h-[600px] flex flex-col">
-          <CardHeader className="border-b">
+        <Card className="h-[calc(100vh-12rem)] min-h-[500px] flex flex-col shadow-md border-border/50">
+          <CardHeader className="border-b bg-muted/30 py-3">
             <div className="flex items-center gap-3">
               <UserAvatar
                 name={otherUser.name}
                 imageUrl={otherUser.imageUrl ?? undefined}
+                className="ring-2 ring-background"
               />
-              <CardTitle>{otherUser.name}</CardTitle>
+              <div>
+                <CardTitle className="text-base font-medium leading-none">{otherUser.name}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Online</p>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/5">
             {messages?.map((message) => {
               const isCurrentUser =
                 message.senderId === conversation.currentUserId;
               const user = isCurrentUser ? currentUser ?? "" : otherUser ?? "";
               return (
-                <div key={message.id} className="space-y-4">
+                <div key={message.id} className="w-full">
                   <div
                     className={cn(
-                      "flex items-center gap-2",
-                      isCurrentUser ? "justify-end" : "justify-start"
+                      "flex items-end gap-2 max-w-[80%]",
+                      isCurrentUser ? "ml-auto flex-row-reverse" : "mr-auto"
                     )}
                   >
                     {!isCurrentUser && (
                       <UserAvatar
                         name={user?.name ?? "U"}
                         imageUrl={user?.imageUrl ?? undefined}
+                        size="sm"
+                        className="mb-1"
                       />
                     )}
                     <div
                       className={cn(
-                        "max-w-[70%] rounded-lg p-3",
+                        "rounded-2xl px-4 py-2 shadow-sm text-sm",
                         isCurrentUser
-                          ? "bg-primary/10 text-primary-foreground"
-                          : "bg-muted"
+                          ? "bg-primary text-primary-foreground rounded-br-none"
+                          : "bg-card border text-card-foreground rounded-bl-none"
                       )}
                     >
-                      <p className="text-sm text-foreground">
+                      <p className="leading-relaxed">
                         {message.content}
                       </p>
-                      <p className="text-xs opacity-70 mt-1 text-foreground">
-                        {new Date(message.createdAt).toLocaleTimeString()}
+                      <p className={cn("text-[10px] mt-1 opacity-70", isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                        {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    {isCurrentUser && (
-                      <UserAvatar
-                        name={currentUser?.name ?? "You"}
-                        imageUrl={currentUser?.imageUrl ?? undefined}
-                      />
-                    )}
                   </div>
                 </div>
               );
             })}
           </CardContent>
-          <CardFooter className="border-t p-4">
-            <div className="flex w-full gap-2 items-center">
+          <CardFooter className="p-3 bg-background border-t">
+            <form 
+              className="flex w-full gap-2 items-end"
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendMessageMutation.mutate();
+              }}
+            >
               <Textarea
                 placeholder="Type your message..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="resize-none"
-                rows={2}
+                className="resize-none min-h-[2.5rem] max-h-32 py-3 bg-muted/30 focus-visible:ring-1"
+                rows={1}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    console.log("send message");
+                    sendMessageMutation.mutate();
                   }
                 }}
               />
-              <Button onClick={() => sendMessageMutation.mutate()}>Send</Button>
-            </div>
+              <Button type="submit" size="icon" className="shrink-0 h-10 w-10 rounded-full" disabled={!message.trim() || sendMessageMutation.isPending}>
+                <SendIcon className="size-4" />
+              </Button>
+            </form>
           </CardFooter>
         </Card>
       </div>

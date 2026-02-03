@@ -3,13 +3,26 @@ import { users } from "@/db/schema";
 import { currentUser, User } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 
+const generateUsername = (base: string) => {
+  const cleanBase = base.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  return `${cleanBase}${randomSuffix}`;
+};
+
 const createUserFromClerk = async (clerkUser: User) => {
+  const baseForUsername =
+    clerkUser.username ||
+    clerkUser.emailAddresses[0].emailAddress ||
+    clerkUser.firstName ||
+    "user";
+
   const [user] = await db
     .insert(users)
     .values({
       clerkId: clerkUser.id,
       email: clerkUser.emailAddresses[0].emailAddress || "",
-      name: `${clerkUser.firstName} ${clerkUser.lastName}`.trim() || "User",
+      name: `${clerkUser.firstName} ${clerkUser.lastName}`.trim() || baseForUsername,
+      username: clerkUser.username || generateUsername(baseForUsername),
       imageUrl: clerkUser.imageUrl,
     })
     .returning()
@@ -44,6 +57,7 @@ export const getOrCreateUserByClerkId = async (clerkId: string) => {
             clerkUser.lastName ||
             clerkUser.username ||
             existingUser.name,
+          username: existingUser.username || (clerkUser.username || generateUsername(email)),
           imageUrl: clerkUser.imageUrl,
           updatedAt: new Date(),
         })

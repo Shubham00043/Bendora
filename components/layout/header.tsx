@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { MessageCircleIcon, TrophyIcon, UsersIcon } from "lucide-react";
+import { BookOpenIcon, GraduationCapIcon, MessageCircleIcon, Triangle, TrophyIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "../ui/badge";
 
@@ -12,26 +12,35 @@ export default function Header({ isPro }: { isPro: boolean }) {
     <header>
       <div className="layout-container">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-bold text-xl space-x-2">
+          <Link href="/" className="font-bold text-xl flex items-center gap-2">
+            <div className="bg-primary/10 p-1.5 rounded-md">
+              <GraduationCapIcon className="size-5 text-primary" />
+            </div>
             Meetsy
           </Link>
 
           {isSignedIn && (
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-1">
               <Link href="/dashboard">
                 <Button variant={"ghost"} size={"sm"}>
                   Dashboard
                 </Button>
               </Link>
+              <Link href="/courses">
+                <Button variant={"ghost"} size={"sm"}>
+                  <BookOpenIcon className="size-4 text-primary mr-2" />
+                  Courses
+                </Button>
+              </Link>
               <Link href="/communities">
                 <Button variant={"ghost"} size={"sm"}>
-                  <UsersIcon className="size-4 text-primary" />
+                  <UsersIcon className="size-4 text-primary mr-2" />
                   Communities
                 </Button>
               </Link>
               <Link href="/chat">
                 <Button variant={"ghost"} size={"sm"}>
-                  <MessageCircleIcon className="size-4 text-primary" />
+                  <MessageCircleIcon className="size-4 text-primary mr-2" />
                   Chat
                 </Button>
               </Link>

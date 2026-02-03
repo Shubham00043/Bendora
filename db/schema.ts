@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   name: text("name").notNull(),
   imageUrl: text("image_url"),
+  username: text("username").unique(),
   subscriptionTier: text("subscription_tier").default("free").notNull(), // free, pro
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

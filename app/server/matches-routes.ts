@@ -26,6 +26,63 @@ type Variables = {
 
 const matchesApp = new Hono<{ Variables: Variables }>()
   .use("/*", authMiddleware)
+  .post("/:communityId/direct", async (c) => {
+    const user = c.get("user");
+    const communityId = c.req.param("communityId");
+    const { partnerId } = await c.req.json<{ partnerId: string }>();
+
+    const { and, or, eq } = await import("drizzle-orm");
+
+    // Check existing match
+    const existingMatches = await db
+      .select()
+      .from(matches)
+      .where(
+        and(
+          eq(matches.communityId, communityId),
+          or(
+            and(eq(matches.user1Id, user.id), eq(matches.user2Id, partnerId)),
+            and(eq(matches.user1Id, partnerId), eq(matches.user2Id, user.id))
+          )
+        )
+      );
+
+    let match = existingMatches[0];
+
+    if (!match) {
+      const [newMatch] = await db
+        .insert(matches)
+        .values({
+          user1Id: user.id,
+          user2Id: partnerId,
+          communityId: communityId,
+          status: "accepted",
+        })
+        .returning();
+      match = newMatch;
+    } else if (match.status !== "accepted") {
+       // Auto-accept if pending
+       const [updated] = await db.update(matches).set({ status: "accepted" }).where(eq(matches.id, match.id)).returning();
+       match = updated;
+    }
+
+    // Ensure conversation exists
+    let [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.matchId, match.id));
+
+    if (!conversation) {
+      [conversation] = await db
+        .insert(conversations)
+        .values({
+          matchId: match.id,
+        })
+        .returning();
+    }
+
+    return c.json({ match, conversation });
+  })
   .post("/:communityId/aimatch", async (c) => {
     const user = c.get("user");
     const communityId = c.req.param("communityId");

@@ -3,6 +3,7 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import { Textarea } from "../ui/textarea";
 import { useCreateLearningGoal } from "@/hooks/use-goals";
+import { toast } from "sonner";
 
 export default function AddLearningGoal({
   selectedCommunityId,
@@ -25,8 +26,10 @@ export default function AddLearningGoal({
       });
       setNewGoalText("");
       setShowNewGoalForm(false);
+      toast.success("Learning goal added successfully!");
     } catch (error) {
       console.error("Error creating learning goal", error);
+      toast.error("Failed to add learning goal. Please try again.");
     }
   };
 
