@@ -114,6 +114,17 @@ export const communitiesRelations = relations(communities, ({ one, many }) => ({
   matches: many(matches),
 }));
 
+export const communityMembersRelations = relations(communityMembers, ({ one }) => ({
+  user: one(users, {
+    fields: [communityMembers.userId],
+    references: [users.id],
+  }),
+  community: one(communities, {
+    fields: [communityMembers.communityId],
+    references: [communities.id],
+  }),
+}));
+
 export const learningGoalsRelations = relations(learningGoals, ({ one }) => ({
   user: one(users, {
     fields: [learningGoals.userId],

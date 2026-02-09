@@ -4,7 +4,7 @@
   "private": true,
   "author": "Shubham00043",
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx --env-file=.env.local server.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -32,6 +32,8 @@
     "pg": "^8.17.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.5"

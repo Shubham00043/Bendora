@@ -1,22 +1,25 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
-import { UserAvatar } from "../ui/user-avatar";
-import { Textarea } from "../ui/textarea";
-import { Button } from "../ui/button";
+import { useRef, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/nextjs"; 
 import { client } from "@/lib/api-client";
-import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";  
+import { UserAvatar } from "../ui/user-avatar"; 
+import { 
+  Loader2, 
+  SendIcon, 
+  Sparkles, 
+  ListChecks, 
+  Lightbulb, 
+  ArrowRight, 
+  FileText 
+} from "lucide-react";
+import { useSocket } from "../providers/socket-provider";
 import { Badge } from "../ui/badge";
-import { SendIcon } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { cn } from "@/lib/utils";
 
 export default function ChatInterface({ matchId }: { matchId: string }) {
   const { user: clerkUser } = useUser();
@@ -36,6 +39,33 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
     },
   });
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const { socket, isConnected } = useSocket();
+
+  useEffect(() => {
+     if (socket && isConnected && matchId) {
+         socket.emit("join_room", matchId);
+         
+         const handleReceiveMessage = () => {
+             // Invalidate queries to fetch new messages
+             queryClient.invalidateQueries({
+                 queryKey: ["messages", conversation?.id],
+             });
+         };
+
+         socket.on("receive_message", handleReceiveMessage);
+
+         return () => {
+             socket.off("receive_message", handleReceiveMessage);
+         };
+     }
+  }, [socket, isConnected, matchId, conversation?.id]);
+
   //fetch the messages for the conversation
   const { data: messages } = useQuery({
     queryKey: ["messages", conversation?.id],
@@ -53,6 +83,12 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
     refetchInterval: 5000, // poll every 5 seconds
   });
 
+  useEffect(() => {
+    if (messages) {
+      scrollToBottom();
+    }
+  }, [messages]);
+
   const queryClient = useQueryClient();
 
   const sendMessageMutation = useMutation({
@@ -69,8 +105,16 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setMessage("");
+      // Emit socket event for real-time update
+      if (socket && matchId) {
+          socket.emit("send_message", {
+              matchId,
+              content: message, // Optimistic, but data actually has the saved message
+              senderId: conversation?.currentUserId 
+          });
+      }
       queryClient.invalidateQueries({
         queryKey: ["messages", conversation?.id],
       });
@@ -139,14 +183,28 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
         <Card className="h-[calc(100vh-12rem)] min-h-[500px] flex flex-col shadow-md border-border/50">
           <CardHeader className="border-b bg-muted/30 py-3">
             <div className="flex items-center gap-3">
-              <UserAvatar
-                name={otherUser.name}
-                imageUrl={otherUser.imageUrl ?? undefined}
-                className="ring-2 ring-background"
-              />
+              <div className="relative">
+                <UserAvatar
+                  name={otherUser.name}
+                  imageUrl={otherUser.imageUrl ?? undefined}
+                  className="ring-2 ring-background"
+                />
+                {isConnected && (
+                  <span className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-background rounded-full" />
+                )}
+              </div>
               <div>
                 <CardTitle className="text-base font-medium leading-none">{otherUser.name}</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Online</p>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    {isConnected ? (
+                        <>
+                           <span className="size-1.5 bg-green-500 rounded-full animate-pulse" />
+                           Online
+                        </>
+                    ) : (
+                        "Offline"
+                    )}
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -154,42 +212,36 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
             {messages?.map((message) => {
               const isCurrentUser =
                 message.senderId === conversation.currentUserId;
-              const user = isCurrentUser ? currentUser ?? "" : otherUser ?? "";
+              const user = isCurrentUser ? currentUser : otherUser;
               return (
-                <div key={message.id} className="w-full">
+                <div key={message.id} className={cn("flex w-full gap-2 mb-4", isCurrentUser ? "justify-end" : "justify-start")}>
+                  {!isCurrentUser && (
+                      <UserAvatar
+                        name={user.name}
+                        imageUrl={user.imageUrl ?? undefined}
+                        size="sm"
+                        className="mt-1"
+                      />
+                  )}
                   <div
                     className={cn(
-                      "flex items-end gap-2 max-w-[80%]",
-                      isCurrentUser ? "ml-auto flex-row-reverse" : "mr-auto"
+                      "px-4 py-2.5 max-w-[75%] shadow-sm",
+                      isCurrentUser
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                        : "bg-background border rounded-2xl rounded-tl-sm"
                     )}
                   >
-                    {!isCurrentUser && (
-                      <UserAvatar
-                        name={user?.name ?? "U"}
-                        imageUrl={user?.imageUrl ?? undefined}
-                        size="sm"
-                        className="mb-1"
-                      />
-                    )}
-                    <div
-                      className={cn(
-                        "rounded-2xl px-4 py-2 shadow-sm text-sm",
-                        isCurrentUser
-                          ? "bg-primary text-primary-foreground rounded-br-none"
-                          : "bg-card border text-card-foreground rounded-bl-none"
-                      )}
-                    >
-                      <p className="leading-relaxed">
-                        {message.content}
-                      </p>
-                      <p className={cn("text-[10px] mt-1 opacity-70", isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                        {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                    <p className={cn("text-[10px] mt-1 text-right opacity-70", isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                      {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </CardContent>
           <CardFooter className="p-3 bg-background border-t">
             <form 
@@ -220,77 +272,113 @@ export default function ChatInterface({ matchId }: { matchId: string }) {
         </Card>
       </div>
       <div className="col-span-1">
-        <Card className="w-full">
-          <CardHeader>
+        <Card className="w-full h-[calc(100vh-12rem)] min-h-[500px] flex flex-col shadow-md border-border/50">
+          <CardHeader className="border-b bg-muted/10 py-4">
             <div className="flex items-center justify-between">
-              <CardTitle>Conversation Summary</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                  <Sparkles className="size-4 text-primary" />
+                  AI Check-in
+              </CardTitle>
               <Button
                 size="sm"
+                variant="outline"
                 onClick={() => generateSummaryMutation.mutate()}
+                disabled={generateSummaryMutation.isPending}
+                className="h-8 gap-2"
               >
-                Generate
+                {generateSummaryMutation.isPending ? (
+                    <Loader2 className="size-3 animate-spin" />
+                ) : (
+                    <Sparkles className="size-3" />
+                )}
+                Summarize
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-1">Current conversation insights</p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-6">
             {summary ? (
-              <>
-                <div>
-                  <h4 className="font-medium mb-2">Summary</h4>
-                  <p className="text-sm text-muted-foreground">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm flex items-center gap-2 text-primary">
+                      <FileText className="size-4" />
+                      Executive Summary
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed bg-muted/20 p-3 rounded-lg border">
                     {summary.summary}
                   </p>
                 </div>
+
                 {summary.keyPoints && summary.keyPoints.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2">Key Points</h4>
-                    <ul className="space-y-1">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2 text-blue-500">
+                        <Lightbulb className="size-4" />
+                        Key Insights
+                    </h4>
+                    <ul className="space-y-2">
                       {summary.keyPoints.map((point: string, index: number) => (
                         <li
                           key={index}
-                          className="text-sm text-muted-foreground"
+                          className="text-sm text-muted-foreground flex items-start gap-2"
                         >
-                          • {point}
+                          <span className="mt-1.5 size-1.5 rounded-full bg-blue-500 shrink-0" />
+                          <span>{point}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
+
                 {summary.actionItems && summary.actionItems.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2">Action Items</h4>
-                    <div className="space-y-2">
-                      {summary.actionItems.map((item, index: number) => (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2 text-green-500">
+                        <ListChecks className="size-4" />
+                        Action Items
+                    </h4>
+                    <div className="space-y-2 bg-green-500/5 p-3 rounded-lg border border-green-500/10">
+                      {summary.actionItems.map((item: string, index: number) => (
                         <div key={index} className="flex items-start gap-2">
-                          <ul className="flex-1 list-disc list-inside">
-                            <li className="text-sm">{item}</li>
-                          </ul>
+                           <div className="mt-1 size-4 border-2 border-green-500/50 rounded flex items-center justify-center shrink-0">
+                               <div className="size-2 bg-green-500 rounded-[1px]" />
+                           </div>
+                           <span className="text-sm text-muted-foreground">{item}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
+
                 {summary.nextSteps && summary.nextSteps.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2">Next Steps</h4>
-                    <ul className="space-y-1">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2 text-purple-500">
+                        <ArrowRight className="size-4" />
+                        Next Steps
+                    </h4>
+                    <ul className="space-y-2">
                       {summary.nextSteps.map((step: string, index: number) => (
                         <li
                           key={index}
-                          className="text-sm text-muted-foreground"
+                          className="text-sm text-muted-foreground flex items-start gap-2"
                         >
-                          • {step}
+                           <ArrowRight className="size-3 mt-1 text-purple-500 shrink-0" />
+                           {step}
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
-              </>
+                
+                <p className="text-[10px] text-muted-foreground text-center pt-4 border-t">
+                    Generated on {new Date(summary.generatedAt).toLocaleDateString()}
+                </p>
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                No summary generated yet. Click &quot;Generate&quot; to create
-                one.
-              </p>
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 text-muted-foreground opacity-50">
+                <Sparkles className="size-12" />
+                <p className="text-sm">
+                  Click &quot;Summarize&quot; to generate an AI breakdown of your conversation.
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

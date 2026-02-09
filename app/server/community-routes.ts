@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { authMiddleware } from "./middleware/auth-middleware";
+import { getMembersInCommunity } from "@/lib/db-helpers";
 
 type Variables = {
   userId: string;
@@ -61,6 +62,13 @@ const communitiesApp = new Hono<{ Variables: Variables }>()
       communityId: communityId,
     });
   })
+  .get("/:communityId/members", async (c) => {
+    const user = c.get("user");
+    const communityId = c.req.param("communityId");
+
+    const members = await getMembersInCommunity(communityId, user.id);
+    return c.json(members);
+  });
 
 
 export { communitiesApp };

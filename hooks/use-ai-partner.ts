@@ -18,6 +18,9 @@ export const useAiPartners = () => {
       queryClient.invalidateQueries({
         queryKey: ["potentialPartners", variables],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["matches"],
+      });
     },
     onError: (error) => {
       console.error("Error finding ai partner", error);

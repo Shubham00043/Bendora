@@ -49,6 +49,7 @@ export const aiMatchUsers = async (
     const memberWithoutGoals = [];
 
     for (const member of members) {
+      if (member.user.id === user.id) continue;
       if (existingMatchUserIds.has(member.user.id)) continue;
 
       const memberGoals = goalsMap.get(member.user.id) || [];

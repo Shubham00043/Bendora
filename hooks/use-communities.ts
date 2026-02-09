@@ -63,3 +63,19 @@ export const useJoinCommunity = () => {
     },
   });
 };
+
+export const useCommunityMembers = (communityId: string | null) => {
+  return useQuery({
+    queryKey: ["communityMembers", communityId],
+    queryFn: async () => {
+      const res = await client.api.communities[":communityId"].members.$get({
+        param: { communityId: communityId! },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch community members");
+      }
+      return res.json();
+    },
+    enabled: !!communityId,
+  });
+};

@@ -55,7 +55,11 @@ export default function Header({ isPro }: { isPro: boolean }) {
                   <TrophyIcon className="size-3 text-primary" /> Pro
                 </Badge>
               ) : (
-                "Free"
+                <Link href="/pricing">
+                  <Badge className="flex items-center gap-2 cursor-pointer hover:bg-muted" variant="outline">
+                    Free
+                  </Badge>
+                </Link>
               )}
               <UserButton
                 appearance={{

@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function SearchPeers({
   selectedCommunityId,
@@ -78,11 +79,13 @@ export default function SearchPeers({
               <Card key={user.id} className="overflow-hidden">
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <UserAvatar name={user.name} imageUrl={user.imageUrl ?? undefined} size="md" />
-                    <div>
-                      <p className="font-semibold text-lg">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">Ready to connect</p>
-                    </div>
+                    <Link href={`/user/${user.id}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+                      <UserAvatar name={user.name} imageUrl={user.imageUrl ?? undefined} size="md" />
+                      <div>
+                        <p className="font-semibold text-lg">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">Ready to connect</p>
+                      </div>
+                    </Link>
                   </div>
                   <Button
                     onClick={() => startChatMutation.mutate(user.id)}

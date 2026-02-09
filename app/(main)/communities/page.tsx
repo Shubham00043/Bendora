@@ -1,7 +1,7 @@
 "use client";
 
 import AddLearningGoal from "@/components/communities/add-learning-goal";
-import AIMatching from "@/components/communities/ai-matching";
+import CommunityMembers from "@/components/communities/community-members";
 import SearchPeers from "@/components/communities/search-peers";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +13,12 @@ import {
 } from "@/components/ui/card";
 import { useCommunities, useCommunityGoals } from "@/hooks/use-communities";
 import { useCurrentUser } from "@/hooks/use-users";
-import { LockIcon, SparklesIcon, TargetIcon } from "lucide-react";
+import { LockIcon, SparklesIcon, TargetIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { startTransition, useEffect, useState } from "react";
 
 export default function CommunitiesPage() {
-  const [activeTab, setActiveTab] = useState<"goals" | "matches" | "search">("goals");
+  const [activeTab, setActiveTab] = useState<"goals" | "members" | "search">("goals");
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(
     null
   );
@@ -47,7 +47,7 @@ export default function CommunitiesPage() {
   const { data: user } = useCurrentUser();
   const isPro = user?.isPro;
 
-  const showLockIcon = numberOfCommunities >= 3 && !isPro;
+  const showLockIcon = false; //numberOfCommunities >= 3 && !isPro;
 
   if (!isLoadingCommunities && communities?.length === 0) {
     return (
@@ -114,11 +114,12 @@ export default function CommunitiesPage() {
               My Goals
             </Button>
             <Button
-              onClick={() => setActiveTab("matches")}
-              variant={activeTab === "matches" ? "default" : "outline"}
+              onClick={() => setActiveTab("members")}
+              variant={activeTab === "members" ? "default" : "outline"}
               size="sm"
             >
-              Find Partners with AI
+              <UsersIcon className="size-4 mr-2" />
+              Members
             </Button>
             <Button
               onClick={() => setActiveTab("search")}
@@ -132,8 +133,8 @@ export default function CommunitiesPage() {
           <CardTitle>
             {activeTab === "goals"
               ? "Learning Goals"
-              : activeTab === "matches" 
-              ? "Potential Learning Partners"
+              : activeTab === "members" 
+              ? "Community Members"
               : "Search Peers"}
           </CardTitle>
           <CardDescription>
@@ -141,8 +142,8 @@ export default function CommunitiesPage() {
               ? `${communityGoals?.length || 0} ${
                   (communityGoals?.length || 0) === 1 ? "goal" : "goals"
                 } in selected community`
-              : activeTab === "matches"
-              ? "Members with similar learning goals"
+              : activeTab === "members"
+              ? "See who else is in this community"
               : "Find specific people to chat with"}
           </CardDescription>
         </CardHeader>
@@ -174,9 +175,8 @@ export default function CommunitiesPage() {
                   />
               </div>
             </div>
-          ) : activeTab === "matches" ? (
-            <AIMatching
-              totalGoals={communityGoals?.length || 0}
+          ) : activeTab === "members" ? (
+            <CommunityMembers
               selectedCommunityId={selectedCommunity!}
               showLockIcon={showLockIcon}
             />

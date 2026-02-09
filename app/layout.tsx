@@ -2,6 +2,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { SocketProvider } from "@/components/providers/socket-provider";
+
 import HeaderWrapper from "@/components/layout/header-wrapper";
 import Footer from "@/components/layout/footer";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -28,9 +30,11 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${outfitFont.className} antialiased`}>
           <QueryProvider>
-            <HeaderWrapper />
-            {children}
-            <Footer />
+            <SocketProvider>
+              <HeaderWrapper />
+              {children}
+              <Footer />
+            </SocketProvider>
           </QueryProvider>
           <Toaster position="top-right" />
         </body>
