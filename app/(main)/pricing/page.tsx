@@ -9,7 +9,7 @@ export default function PricingPage() {
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Upgrade Your Learning Journey</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Unlock the full potential of Meetsy with our Pro plan. Get unlimited AI matching, advanced analytics, and more.
+          Unlock the full potential of Bendora with our Pro plan. Get unlimited AI matching, advanced analytics, and more.
         </p>
       </div>
 

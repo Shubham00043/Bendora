@@ -1,6 +1,6 @@
 # Bendora - A community learning platform where learners find compatible study partners and achieve their goals together!
 
-Get complete access to Meetsy, an AI-powered learning platform that connects you with the perfect learning partners based on your goals, interests, and learning style in one intelligent matching system.
+Get complete access to Bendora, an AI-powered learning platform that connects you with the perfect learning partners based on your goals, interests, and learning style in one intelligent matching system.
 
 ## ⚡ Features
 
@@ -18,6 +18,7 @@ Get complete access to Meetsy, an AI-powered learning platform that connects you
 - 🤖 OpenAI GPT-4o-mini for AI-powered matching and conversation summaries
 - ⚡ Hono for lightweight, fast API endpoints
 - 🔄 TanStack React Query for efficient server state management
+- 📺 YouTube Data API v3 for fetching relevant course videos
 
 ### 💫 Application Features:
 
@@ -25,7 +26,8 @@ Get complete access to Meetsy, an AI-powered learning platform that connects you
 - 🎯 Community-based learning with goal tracking and progress management
 - 💬 Real-time chat with learning partners in dedicated conversations
 - 📊 AI-generated conversation summaries with action items and next steps
-- 🔒 Secure authentication and protected routes
+- � Relevant video recommendations for each course topic
+- �🔒 Secure authentication and protected routes
 - 👨‍💼 Subscription tier management (FREE and PRO plans)
 - 📱 Responsive design optimized for mobile and desktop
 - 🔔 Real-time toast notifications for updates and actions
@@ -46,6 +48,7 @@ To get started with this project:
    - Clerk authentication keys
    - PostgreSQL database connection string
    - OpenAI API key
+   - YouTube Data API key
 
 ## 🔨 How to Fork and Clone
 
@@ -63,7 +66,7 @@ Create a `.env.local` file in the root directory:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/meetsy
+DATABASE_URL=postgresql://user:password@localhost:5432/bendora
 
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -74,6 +77,9 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
 # OpenAI for AI Features
 OPENAI_API_KEY=sk-...
+
+# YouTube Data API
+YOUTUBE_API_KEY=...
 ```
 
 ## 🗄️ Database Setup

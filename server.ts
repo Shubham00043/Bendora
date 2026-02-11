@@ -3,9 +3,10 @@ import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
 import { parse } from "node:url";
+import { networkInterfaces } from "node:os";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
+const hostname = "0.0.0.0";
 const port = 3000;
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
@@ -49,6 +50,15 @@ app.prepare().then(() => {
       process.exit(1);
     })
     .listen(port, () => {
-      console.log(`> Ready on http://${hostname}:${port}`);
+      console.log(`> Ready on http://localhost:${port}`);
+      
+      const nets = networkInterfaces();
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name]!) {
+          if (net.family === 'IPv4' && !net.internal) {
+            console.log(`> Network access: http://${net.address}:${port}`);
+          }
+        }
+      }
     });
 });

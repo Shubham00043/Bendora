@@ -16,7 +16,7 @@ export default function Header({ isPro }: { isPro: boolean }) {
             <div className="bg-primary/10 p-1.5 rounded-md">
               <GraduationCapIcon className="size-5 text-primary" />
             </div>
-            Meetsy
+            Bendora
           </Link>
 
           {isSignedIn && (
